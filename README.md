@@ -1,18 +1,18 @@
 # MLSWG
-Frequency-domain vector mode solver for guided waves in slab (1D) waveguides. Supports arbitrary number of slabs (layers) sandwiched between two semi-infinite claddding/substrate layers. Each slab is described by its thickness and refractive index; the latter can be a complex number, allowing the study of lossy and/or plasmonic (SPP) modes. These waveguide structures support only TE- and TM-polarized modes, i.e., neither TEM nor fully hybrid ones. 
+Frequency-domain vector mode solver for guided waves in slab (1D) waveguides. Supports arbitrary number of slabs (layers) sandwiched between two semi-infinite claddding/substrate layers. Each slab is described by its thickness and refractive index (RI); the RI can be a complex number, allowing the study of lossy and/or plasmonic (SPP) modes. These waveguide structures support only TE- and TM-polarized modes, i.e., neither TEM nor fully hybrid ones. 
 
 ![Schematic](https://user-images.githubusercontent.com/97299585/199737279-688c74af-8ce7-469f-9007-e3c42a0542d4.JPG)
 
 Fig. 1: Schematic of multi-layered slab waveguide (MLWSG), with two intermediate layers (slabs) between a substrate and cladding (semi-infinite). Propagation is along the z-axis, whereas the 1D cross-section of the waveguide is along the x-axis. The mode polarizations are marked in the right.
 
 ## Brief Description
-The software works by solving the characteristic equation (CE) for the specified wavelength and polarization, and tries to find all modes (CE roots) within a given interval of effective index values (n_eff = β/k0). The CE is formed by applying the EM-field boundary conditions at the interface between each pair of layers; for materials with losses the CE is complex valued. 
+The software works by solving the **characteristic equation** (CE) for the specified wavelength and polarization, and tries to find all modes (CE roots) within a given interval of effective index values (n_eff = β/k0, where β is the propagation constant and k0 is the vacuum wavenumber). The CE is formed by applying the EM-field boundary conditions at the interface between each pair of layers; for materials with losses the CE is complex valued. 
 
 The solver returns the eigenvalues (n_effs) and eigenvectors (Ey or Hy profile, for TE and TM polarizations, respectively) of all modes found. A `leap-frog' algorithm is used to smartly sweep the n_eff search-range boundary provided by the user, looking for roots. A Newton-Raphson method is used to solve the CE in each sub-domain of the search-range. 
 
 ## Utilization and I/O arguments
 
-The packages includes the main m-file (MLSWG) together with some more auxiliary m-files:
+The packages includes the main m-file, **MLSWG.m**, together with some more auxiliary m-files:
 * MLSWG_CharEq.m : forms the CE (characteristic equation).
 * myNewtonRaphson.m : [Newton-Raphson method](https://en.wikipedia.org/wiki/Newton%27s_method) to find **one** x-root of a complex-valued function y=f(x), given also its x-derivative, df/dx. This methods looks for a root near a supplied (starting guess) point x0, in a x-bounded space.
 * interpinv.m : Graphically find **all** the roots of the real-valued function f(x).
@@ -68,12 +68,12 @@ Fig. 4 Gap plasmon mode profile (TM-polarization).
 
 ## Various Useful Notes
 
-* Isotropic materials are only considered, but anisotropic uniaxial ones can also be studied provided that their optical axis is aligned with one of the principal cartesian ones and the user carefully specifies the refractive index (ordinary or extraordinary) for the specific mode-polarization (TE or TM).
+* Isotropic materials are only considered, but **anisotropic uniaxial** materials can also be studied provided that their optical axis is aligned with one of the principal cartesian ones and the user carefully specifies the RI (ordinary or extraordinary) for the specific mode-polarization (TE or TM).
 
-* The effective index method (EIM) can be used, in conjunction with MLSWG, to approximately study the modes in 2D waveguides. More details can be found [here](https://www.computational-photonics.eu/eims.html) (click on `Details' in the top-bar).
+* The **effective index method** (EIM) can be used, in conjunction with MLSWG, to approximately study the modes in 2D waveguides. More details can be found [here](https://www.computational-photonics.eu/eims.html) (click on `Details' in the top-bar).
 
-* As the `leap-frog' algorithm used to find all roots/modes is not fully deterministic, in some difficult cases (e.g. multi-mode waveguides with multiple and/or thick slabs), the solver might miss some modes; rerunning the code and/or using different neSL inputs helps.
+* As the `leap-frog' algorithm used by MLSWG to **find all roots/modes** is not fully deterministic, in some difficult cases (e.g. multi-mode waveguides with multiple and/or thick slabs), the solver might miss some modes; re-executing the code and/or using different neSL inputs helps.
 
-* Plasmonic (SPP) modes are trickier for MLSWG to automatically handle. Do note that TM polarization is specificially required, and a narrow and careful neSL choice is advised. As a last-ditch, switch whichNeffsToOutput from 0 to 2 (line ~97 in the MLSWG m-file).
+* **Plasmonic (SPP) modes** are trickier for MLSWG to automatically handle. Do note that TM polarization is specifically required, and a narrow and careful neSL choice is advised. As a last-ditch, switch variable `whichNeffsToOutput' from 0 to 2 (line ~97 in the MLSWG m-file).
 
-* Partially inspired by Dr. Hammer's [OMS](https://www.computational-photonics.eu/oms.html), which does not support complex-valued refractive indices (nor scripting or editing, of course).
+* This solver was partially inspired by Dr. Hammer's [OMS](https://www.computational-photonics.eu/oms.html), which does not support complex-valued refractive indices (nor scripting or editing, of course).
