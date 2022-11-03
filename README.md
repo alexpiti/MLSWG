@@ -1,6 +1,10 @@
 # MLSWG
 Frequency-domain vector mode solver for guided waves in slab (1D) waveguides. Supports arbitrary number of slabs (layers) sandwiched between two semi-infinite claddding/substrate layers. Each slab is described by its thickness and refractive index; the latter can be a complex number, allowing the study of lossy and/or plasmonic (SPP) modes. These waveguide structures support only TE- and TM-polarized modes, i.e., neither TEM nor fully hybrid ones. 
 
+![Schematic](https://user-images.githubusercontent.com/97299585/199737279-688c74af-8ce7-469f-9007-e3c42a0542d4.JPG)
+
+Fig. 1: Schematic of such a waveguide, with two intermediate layers (slabs).
+
 ## Brief Description
 The software works by solving the characteristic equation (CE) for the specified wavelength and polarization, and tries to find all modes (CE roots) within a given interval of effective index values (n_eff = β/k0). The CE is formed by applying the EM-field boundary conditions at the interface between each pair of layers; for materials with losses the CE is complex valued. 
 
@@ -27,9 +31,9 @@ Here are the I/O argument descriptions:
  ==== Inputs / Obligatory ====
   - ModePol : 'TE' or 'TM' (string) - Polarization of modes
   - wl  : wavelength [Same units as ts!]
-  - nLR : refr. indices of [Left,Right] semi-inf layers (2x1 array)
-  - ns  : refr. indices of guiding layers (NLx1 array)
-  - ts  : thicknesses of guiding layers (NLx1 array) [Same units as wl!]
+  - nLR : refr. indices of [Left,Right] semi-inf layers (2x1 array) -- It's the n_bot and n_top in Fig. 1.
+  - ns  : refr. indices of guiding layers (NLx1 array) -- It's the n1 and n2 in Fig. 1.
+  - ts  : thicknesses of guiding layers (NLx1 array) [Same units as wl!] -- It's the t1 and t2 in Fig. 1.
 
  ==== Inputs / Optional ====
   - neSL: n-effective search limits (2x1 array, [Low,High])
@@ -44,23 +48,23 @@ Note: The wave propagation direction is along z-axis and the slabs lie in the yz
 
 ## Examples
 
-In Fig. 1 are the output figures when calling MLSWG with no inputs from the MATLAB command window. In this case, the m-file is set for a lossless photonic coupler with core index 3.2 and substrate index 1.45; the two cores are 250 nm wide and have a gap of 400 nm between them; the operation wavelength is 1550 nm. One of the coupler cores is slightly detuned, i.e., has an index of 3.1750, so that only two quasi-symmetric/antisymmetric modes are supported in the TE polarization.
+In Fig. 2 are the output figures when calling MLSWG with no inputs from the MATLAB command window. In this case, the m-file is set for a lossless photonic coupler with core index 3.2 and substrate index 1.45; the two cores are 250 nm wide and have a gap of 400 nm between them; the operation wavelength is 1550 nm. One of the coupler cores is slightly detuned, i.e., has an index of 3.1750, so that only two quasi-symmetric/antisymmetric modes are supported in the TE polarization.
 
 ![OutputFigs_1Default_DesyncCoupler](https://user-images.githubusercontent.com/97299585/199725650-5983ebb8-ba11-4e1c-a531-251bc15c552d.JPG)
 
-Fig. 1: Left panels are the CE and its derivative (required for the Newton-Raphson method) in the defined n_eff search-range; the vertical lines correspond to the roots found. The right panels hold the mode profiles with the n_eff given in the panel title.
+Fig. 2: Left panels are the CE and its derivative (required for the Newton-Raphson method) in the defined n_eff search-range; the vertical lines correspond to the roots found. The right panels hold the mode profiles with the n_eff given in the panel title.
 
-Below, Fig. 2, an example of the modes supported by a lattice of 9 photonic waveguides (parameters same as above, without detuning in any core).
+Below, Fig. 3, an example of the modes supported by a lattice of 9 photonic waveguides (parameters same as above, without detuning in any core).
 
 ![OutputFigs_2_Lattice](https://user-images.githubusercontent.com/97299585/199725661-82325518-7c27-4b81-b5c1-1392d9a7b8c5.JPG)
 
-Fig. 2: The mode profiles supported by a 9-core photonic waveguide lattice.
+Fig. 3: The mode profiles supported by a 9-core photonic waveguide lattice.
 
-Finally, a gap plasmon mode, when a 250 nm air-slot is formed between two gold layers (Au refractive index in the NIR is assumed n~0.55-10j for 1550 nm wavelength).
+Finally, in Fig. 4, a gap plasmon mode supported by a 250 nm air-slot between two semi-infinite gold layers. The Au refractive index in the NIR is assumed n~0.55-10j, at 1550 nm wavelength.
 
 ![OutputFigs_3_Plasmonic_GapSPP](https://user-images.githubusercontent.com/97299585/199728604-21b66072-732c-45f3-9c4a-a4193ebba6de.JPG)
 
-Fig. 3: Gap plasmon mode profile (TM-polarization).
+Fig. 4 Gap plasmon mode profile (TM-polarization).
 
 ## Various Useful Notes
 
