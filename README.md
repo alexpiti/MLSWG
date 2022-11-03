@@ -3,7 +3,7 @@ Frequency-domain vector mode solver for guided waves in slab (1D) waveguides. Su
 
 ![Schematic](https://user-images.githubusercontent.com/97299585/199737279-688c74af-8ce7-469f-9007-e3c42a0542d4.JPG)
 
-Fig. 1: Schematic of such a waveguide, with two intermediate layers (slabs).
+Fig. 1: Schematic of multi-layered slab waveguide (MLWSG), with two intermediate layers (slabs) between a substrate and cladding (semi-infinite). Propagation is along the z-axis, whereas the 1D cross-section of the waveguide is along the x-axis. The mode polarizations are marked in the right.
 
 ## Brief Description
 The software works by solving the characteristic equation (CE) for the specified wavelength and polarization, and tries to find all modes (CE roots) within a given interval of effective index values (n_eff = β/k0). The CE is formed by applying the EM-field boundary conditions at the interface between each pair of layers; for materials with losses the CE is complex valued. 
