@@ -77,3 +77,7 @@ Fig. 4 Gap plasmon mode profile (TM-polarization).
 * **Plasmonic (SPP) modes** are trickier for MLSWG to automatically handle. Do note that TM polarization is specifically required, and a narrow and careful neSL choice is advised. As a last-ditch, switch variable `whichNeffsToOutput' from 0 to 2 (line ~97 in the MLSWG m-file).
 
 * This solver was partially inspired by Dr. Hammer's [OMS](https://www.computational-photonics.eu/oms.html), which does not support complex-valued refractive indices (nor scripting or editing, of course).
+
+## Citation
+
+If MLSWG was used in research papers, be a pal and cite [this paper of mine](https://doi.org/10.1364/JOSAB.470129), where it was preliminary used, before switching to 2D waveguides, solved with the finite-element method.
