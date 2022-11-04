@@ -6,9 +6,9 @@ function [ neffs , Fy , x_out ] = MLSWG( ModePol , wl , nLR , ns , ts , ...
 %     Used to find the modes of MLSWGs with arbitrary number of guiding 
 %     layers, that can have arbitrary thicknesses and complex refractive 
 %     indices. This function can find the guided modes by solving the 
-%     characteristic equation. It might not find all modes at once, but 
-%     repeated calls with different neff search limits (neSL) and can
-%     make it happen.
+%     characteristic equation (CharEq, CE or XE). It might not find all 
+%     modes at once, but  repeated calls with different neff search limits
+%     (neSL) and can make it happen.
 %
 % ==== Outputs ====
 %  - neffs : vector containing the effective refr indices of modes found
@@ -62,6 +62,8 @@ if nargin < 10, DoVocalize   = 0; end % Show stuff on command window
 
 % Test inputs
 if nargin == 0
+    
+    close all; clc;
         
     ModePol = 'TE'; % Mode-Polarization    
     wl = 1.55; % Wavelength [um]
@@ -75,15 +77,14 @@ if nargin == 0
     
     % Thicknesses of guiding-layers (from L->R)
     wid = 0.25; % core-widths
-    gap = 0.42; % gap between cores (buffer-filled)
+    gap = 0.40; % gap between cores (buffer-filled)
     ts = [ wid , repmat( [gap wid] , 1 , Nbr-1 ) ]; % [um]
-    
-    close all;
+        
     neSL = [2.5 3];
     
     % Perturbations
-    if length(ns) > 1 && Nbr >= 2
-        ns(3) = ns(3) - 0.025*1;
+    if length(ns) > 1 && Nbr == 2
+        ns(3) = ns(3) - 0.02*1;
     end 
     
     % Monitoring params
@@ -94,6 +95,11 @@ if nargin == 0
 end
 
 % Which n-effective set to use for mode-profile calculation & plotting
+% The solver mainly uses the "Advanced NR" (see below), but it can also use
+% other methods like a numerical solver (FIDODIES, only TE), graphical 
+% solution (INTERPINV, XE is forced to real) or MATLAB's FZERO (finding of
+% all roots is not guaranteed). This variable controls which is set of
+% roots is returned. Default is 0 (myNewtonRaphson).
 whichNeffsToOutput = 0; % 0=myNewtonRaphson, 1=FIDODIES, 2=INTERPINV, 3=FZERO 
 
 % -------------------------------------------------------------------------
@@ -165,40 +171,44 @@ end
 % -------------------------------------------------------------------------
 if useAlsoFIDODIES == 1
     
-    postMsg( sprintf('%s\n FIDODIES: Numerical FD Eigenmode Solver (SPTARN) \n%s\n', ...
-        flwcs('-') , flwcs('-') ) );
-    
-    if strcmp( ModePol , 'TE' )
+    try
+        postMsg( sprintf('%s\n FIDODIES: Numerical FD Eigenmode Solver (SPTARN) \n%s\n', ...
+            flwcs('-') , flwcs('-') ) );
         
-        % x-vector (FDM space) -- The denser, the higher the accuracy
-        xF = linspace( -xL , sum(ts)+xR , Nx );
-        
-        % Form: PMLs tensors (sx) at each x-point
-        sx = ones(size(xF)); % initialize -- no anisotropy/absorption
-        sPML = 1; % strength of PML
-        wPML = (max(xF)-min(xF))/10; % thickness of PML
-        if sPML ~= 0
-            iL = xF<=(xF( 1 )+wPML); % indices of Left PML
-            iR = xF>=(xF(end)-wPML); % indices of Right PML
-            sx( iL ) = sx( iL ) - 1j*sPML*( ( sum(iL==1):-1:1 )/sum(iL==1) ).^2 ; % Parabolic profile
-            sx( iR ) = sx( iR ) - 1j*sPML*( ( 1:+1:sum(iR==1) )/sum(iR==1) ).^2 ; % Parabolic profile
+        if strcmp( ModePol , 'TE' )
+            
+            % x-vector (FDM space) -- The denser, the higher the accuracy
+            xF = linspace( -xL , sum(ts)+xR , Nx );
+            
+            % Form: PMLs tensors (sx) at each x-point
+            sx = ones(size(xF)); % initialize -- no anisotropy/absorption
+            sPML = 1; % strength of PML
+            wPML = (max(xF)-min(xF))/10; % thickness of PML
+            if sPML ~= 0
+                iL = xF<=(xF( 1 )+wPML); % indices of Left PML
+                iR = xF>=(xF(end)-wPML); % indices of Right PML
+                sx( iL ) = sx( iL ) - 1j*sPML*( ( sum(iL==1):-1:1 )/sum(iL==1) ).^2 ; % Parabolic profile
+                sx( iR ) = sx( iR ) - 1j*sPML*( ( 1:+1:sum(iR==1) )/sum(iR==1) ).^2 ; % Parabolic profile
+            end
+            
+            % Form: Index-profile (nsF) at each  x-point
+            nsF = -1 * ones(size(xF)); % initialize -- all at n_substrate
+            hn = [0 cumsum(ts)];
+            nsF(  xF<=0 ) = nL;
+            nsF ( xF>hn(end) ) = nR;
+            for jj = 1:length(ns)
+                nsF( xF>hn(jj) & xF<=hn(jj+1) ) = ns(jj);
+            end
+            
+            % Call FIDODIES solver (SPTARN-based)
+            neffsEI = FIDODIESv2( wl , xF , nsF , sx );
+            postMsg( sprintf( ' >> Roots = %12.10f (real)\n' , real(neffsEI) ) );
+            
+        else
+            postMsg( ' ## FIDODIES: Can''t Solve for TM modes... Sorry!' );
         end
-        
-        % Form: Index-profile (nsF) at each  x-point
-        nsF = -1 * ones(size(xF)); % initialize -- all at n_substrate
-        hn = [0 cumsum(ts)];
-        nsF(  xF<=0 ) = nL;
-        nsF ( xF>hn(end) ) = nR;
-        for jj = 1:length(ns)
-            nsF( xF>hn(jj) & xF<=hn(jj+1) ) = ns(jj);
-        end
-        
-        % Call FIDODIES solver (SPTARN-based)
-        neffsEI = FIDODIESv2( wl , xF , nsF , sx );
-        postMsg( sprintf( ' >> Roots = %12.10f (real)\n' , real(neffsEI) ) );
-        
-    else
-        postMsg( ' ## FIDODIES: Can''t Solve for TM modes... Sorry!' );
+    catch
+        error( ' ## FIDODIES solver not found. Use other method!' );
     end
     
 end
@@ -212,7 +222,7 @@ if useAlsoINTERPIV == 1
     % can be very close (almost degenerate, e.g. at couplers) which makes
     % discerning them quite hard.
     
-    postMsg( sprintf('%s\n INTERPINV: Graphical Solution to XE \n%s\n', ...
+    postMsg( sprintf('%s\n INTERPINV: Graphical Solution to Real(XE) \n%s\n', ...
         flwcs('-') , flwcs('-') ) );
     
     % Candidate n_eff range:
@@ -390,7 +400,8 @@ if RFA==4
     if isempty(xR),
         postMsg( '  * Nothing found from here.\n' );
     else
-        postMsg( sprintf( '  * Root Found = %12.10f\n' , xR ) );
+        postMsg( sprintf( '  > Root Found = %8.6f %+8.6f*1j\n' , ...
+            xR , imag(xR) ) );
     end
     
     % Second NR, from highest possible neff
@@ -406,7 +417,8 @@ if RFA==4
         postMsg( '  * RUN#2: Root identical to 1st run ==> Single-root.\n' );
         DoProceed = 0;
     else
-        postMsg( sprintf( '  > Root Found = %12.10f\n' , xRc ) );
+        postMsg( sprintf( '  > Root Found = %8.6f %+8.6f*1j\n' , ...
+            xRc , imag(xRc) ) );
         xR = [xR xRc];
     end
     
@@ -454,7 +466,10 @@ end
 
 % Show roots found
 postMsg( sprintf( '%s\n' , flwcs('-') ) )
-postMsg( sprintf( ' >> Roots = %12.10f (real)\n' , real(neffsNR) ) );
+for kk=1:length(neffsNR)
+    postMsg( sprintf( ' >> Root#%d = %12.10f %+12.10f * 1j\n' , kk , ...
+        real(neffsNR(kk)) , imag(neffsNR(kk)) ) );
+end
 postMsg( sprintf( '%s\n' , flwcs('-') ) )
     
 % Which neff set to out?
@@ -468,37 +483,62 @@ end
 % -------------------------------------------------------------------------
 % Plot: XE & Derivative-of-XE (XE=CharEq) with Roots found
 % -------------------------------------------------------------------------
-if DoPlotCharEq == 1
+if DoPlotCharEq == 1    
     
-    maxXE = 1e2;
-    ne = linspace( neSL(1) , neSL(2) , 1e5 );
+    figure('NumberTitle','off','Name','CharEq. vs Real(neff)');
+    ne = linspace( neSL(1) , neSL(2) , 1e4 );
     [ XE, dXE ] = MLSWG_CharEq( ne , nL , nR , ns , wl , ts , ModePol );
+    maxXE  = min( [ max(abs(real( XE))) , 1e1 ] );
+    maxdXE = min( [ max(abs(real(dXE))) , 1e2 ] );
     
     Xfoc =  neSL; % "focus" plot on  neff within the search-limits
     
     subplot(2,1,1)
-    plot( ne , real(XE) , 'bo' ); hold on;
-    plot( ne , imag(XE) , 'b:' );
-    plot( ne , 0*ne , 'k:' );
+    plot( ne , real(XE) , 'bo' , 'MarkerFaceColor' , 'b' ); hold on;
+    plot( ne , imag(XE) , 'rs' );
+    plot( ne , 0*ne , 'k-' , 'LineWidth' , 1.5 );
     set(gca,'YLim',maxXE*[-1 +1]);
     set(gca,'XLim',Xfoc);
     for kr = 1:length(xR);
         plot( real(xR(kr))*[1 1] , get(gca,'YLim') , 'b-' )
     end
-    xlabel( 'n_{eff}' ); ylabel( 'Char. Eq. (XE)' )
+    xlabel( 'Re\{ n_{eff} \}' ); ylabel( 'Char. Eq. (XE)' )
     legend( 'Real' , 'Imag' )
     
     subplot(2,1,2)
-    plot( ne , real(dXE) , 'ro' ); hold on;
-    plot( ne , imag(dXE) , 'r:' );
-    plot( ne , 0*ne , 'k:' );
-    set(gca,'YLim',maxXE*[-1 0]);
+    plot( ne , real(dXE) , 'bo' , 'MarkerFaceColor' , 'b'); hold on;
+    plot( ne , imag(dXE) , 'rs' )
+    plot( ne , 0*ne , 'k-' , 'LineWidth' , 1.5 );
+    set(gca,'YLim',maxdXE*[-1 +1]);
     set(gca,'XLim',Xfoc);
     for kr = 1:length(xR);
         plot( real(xR(kr))*[1 1] , get(gca,'YLim') , 'r-' )
     end
-    xlabel( 'n_{eff}' ); ylabel( 'dXE/dn_{eff}' )
+    xlabel( 'Re\{ n_{eff} \}' ); ylabel( 'dXE/dn_{eff}' )
     legend( 'Real' , 'Imag' )
+    
+    
+    % When neff-root is complex-valued, a heatmap representation is more
+    % appropriate:
+    if any( imag(neffs) ~= 0 )
+        Im = linspace( 0 , max( [-0.1 min(imag(neffs))*1.2] ) , 102 );
+        Re = linspace( neSL(1) , neSL(2) , 98 );
+        for kim = 1:length(Im)            
+            ne = Re + 1j* Im(kim);
+            [ XE, dXE ] = MLSWG_CharEq( ne , nL , nR , ns , wl , ts , ModePol );            
+            aXE(:,kim) = XE;
+            adXE(:,kim) = dXE;
+        end        
+        figure('NumberTitle','off','Name','CharEq. vs complex neff');
+        imagesc( Re, Im , 10*log10(abs(aXE)).' );
+        caxis([-30 0])
+        xlabel( 'Re\{ n_{eff} \}' ); ylabel( 'Im\{ n_{eff} \}' )
+        title( '| XE(n_{eff}) |' );        
+        colorbar
+        colormap(flipud(hot));
+    end
+    
+    
     
 end
 
@@ -618,18 +658,18 @@ end
 % Plot: Mode Profiles
 % -------------------------------------------------------------------------
 if DoPlotModeProfiles == 1
-    figure;
+    figure('NumberTitle','off','Name','Mode Profiles');
     nr = ceil( sqrt( length(neffs) / (1920/1080) ) ); % num-rows in subplot
     nc = ceil( length(neffs) / nr ); % num-cols in subplot
     for m = 1:length(neffs)
         subplot(nr,nc,m)
-        plot( x , real(Fy(m,:)) , 'b' ); hold on;
-        plot( x , imag(Fy(m,:)) , 'r' );
+        plot( x , real(Fy(m,:)) , 'b' , 'Linewidth' , 2 ); hold on;
+        plot( x , imag(Fy(m,:)) , 'r' , 'Linewidth' , 2 );
         plot( x , Pz(m,:) , 'ko' , 'markersize' , 1.5 );
         if m==1
-            legend( 'Re(Fy)' , 'Im(Fy)' , 'Pz' );
+            legend( 'Re\{ F_y(x) \}' , 'Im\{ F_y(x) \}' , 'P_z(x)' );
         end
-        title( sprintf( '\\bf[%s.%d] \\rm neff = %6.4f + j*%6.4f' , ModePol , m , neffs(m),...
+        title( sprintf( '\\bf[%s.%d] \\rm n_{eff} = %6.4f + j*%6.4f' , ModePol , m , neffs(m),...
             imag(neffs(m))) )
         for jj = 1:length(hs)
             plot( hs(jj)*[1 1] , [-1 1] , 'k-' )
@@ -649,7 +689,11 @@ if DoPlotModeProfiles == 1
     %     axis( [x([1 end]) -1 1] )
     % end
     
-    FixMultiFigsPos
+    try
+        FixMultiFigsPos
+    catch
+        
+    end
     
 end
 
