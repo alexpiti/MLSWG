@@ -52,23 +52,23 @@ Notes:
 
 ## Examples
 
-In Fig. 2 are the output figures when calling MLSWG with no inputs from the MATLAB command window. In this case, the m-file is set for a lossless photonic coupler with core RI of 3.2 and a substrate/cladding RI of 1.45; the two cores are 250 nm wide and have a gap of 400 nm between them; the operation wavelength is 1550 nm. One of the coupler cores is slightly detuned, i.e., has an RI of 3.1750, so that only two quasi-symmetric/antisymmetric modes are supported in the TE polarization.
+In Fig. 2 are the output figures when calling MLSWG with no inputs from the MATLAB command window. In this case, the m-file is set for a lossless photonic coupler with core RI of 3.2 and a substrate/cladding RI of 1.45; the two cores are 250 nm wide and have a gap of 400 nm between them; the operation wavelength is 1550 nm. One of the coupler cores is slightly detuned, i.e., has an RI of 3.18, so that only two quasi-symmetric/antisymmetric modes are supported in the TE polarization.
 
-![OutputFigs_1Default_DesyncCoupler](https://user-images.githubusercontent.com/97299585/199725650-5983ebb8-ba11-4e1c-a531-251bc15c552d.JPG)
+![OutputFigs_1Default_DesyncCoupler](https://user-images.githubusercontent.com/97299585/199957919-a193aafd-d9af-4a3d-9d2d-9f271cfd678f.JPG)
 
 <sub>**Fig. 2:** Left panels are the CE and its derivative (required for the Newton-Raphson method) in the defined n_eff search-range; the vertical lines correspond to the roots found. The right panels hold the mode profiles with the n_eff given in the panel title.</sub>
 
-Below, Fig. 3, an example of the modes supported by a lattice of 9 photonic waveguides (parameters same as above, without detuning in any core).
+Below, Fig. 3, an example of the TE modes supported by a lattice of 9 lossy photonic waveguides (same parameters as above, without detuning in any core, but adding a pinch of losses: n=3.2-0.01j).
 
-![OutputFigs_2_Lattice](https://user-images.githubusercontent.com/97299585/199725661-82325518-7c27-4b81-b5c1-1392d9a7b8c5.JPG)
+![OutputFigs_2_Lattice](https://user-images.githubusercontent.com/97299585/199957948-0b86bfff-bbb8-4fb3-a416-ee80981e2f81.JPG)
 
 <sub>**Fig. 3:** The mode profiles supported by a 9-core photonic waveguide lattice.</sub>
 
-Finally, in Fig. 4, a gap plasmon mode supported by a 250 nm air-slot between two semi-infinite gold (Au) layers. The Au RI in the NIR is assumed n~0.55-10j, at 1550 nm wavelength.
+Finally, in Fig. 4, a gap plasmon mode supported by a λ-sized air-slot between two semi-infinite gold (Au) layers. The Au RI in the NIR is assumed n~0.55-10j, at λ=1550 nm wavelength.
 
-![OutputFigs_3_Plasmonic_GapSPP](https://user-images.githubusercontent.com/97299585/199728604-21b66072-732c-45f3-9c4a-a4193ebba6de.JPG)
+![OutputFigs_3_Plasmonic_GapSPP](https://user-images.githubusercontent.com/97299585/199958064-248dea48-7f4b-4bc3-893c-e20c65227cee.JPG)
 
-<sub>Fig. 4 Gap plasmon mode profile (TM-polarization).</sub>
+<sub>Fig. 4 Gap plasmon mode profile (TM-polarization). Plasmonic guiding allows for the reduction of the air-slot width to way below the wavelength, surpassing the diffraction-limit of classical index-constrast waveguiding.</sub>
 
 ## Various Useful Notes
 
@@ -78,7 +78,7 @@ Finally, in Fig. 4, a gap plasmon mode supported by a 250 nm air-slot between tw
 
 * The `leap-frog' algorithm used by MLSWG to **find all roots/modes** is not fully deterministic. So, in some difficult cases (e.g. multi-mode waveguides with multiple and/or thick slabs), the solver might miss some modes; re-executing the code and/or using different neSL inputs helps.
 
-* **Plasmonic (SPP) modes** are trickier for MLSWG to automatically handle, with default inputs only. Do note that TM polarization is specifically required, and a narrow and careful neSL choice is advised. As a last-ditch, edit the MLSWG.m file and switch variable `whichNeffsToOutput' from 0 to 2 (line ~97).
+* **Plasmonic (SPP) modes** are trickier for MLSWG to automatically handle, with default inputs only. Do note that TM polarization is specifically required, and a narrow and careful neSL choice is advised. As a last-ditch, edit the MLSWG.m file and switch variable `whichNeffsToOutput' from 0 to 2 (line ~103).
 
 * This solver was partially inspired by Dr. Hammer's [OMS](https://www.computational-photonics.eu/oms.html) which, however, does not support complex-valued refractive indices (nor scripting or editing, of course).
 
