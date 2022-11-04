@@ -21,7 +21,7 @@ The packages includes the main m-file, **MLSWG.m**, together with some auxiliary
 
 To find your modes, you need to call MSLWG.m, and here is the syntax used:
 ```
-[ neffs , Fy , x_out ] = **MLSWG**( ModePol , wl , nLR , ns , ts , x , neSL , DoPlotCharEq , DoPlotModeProfiles , DoVocalize )
+[ neffs , Fy , x_out ] = MLSWG( ModePol , wl , nLR , ns , ts , x , neSL , DoPlotCharEq , DoPlotModeProfiles , DoVocalize )
 ```
 The I/O argument descriptions are as follows:
 ```
